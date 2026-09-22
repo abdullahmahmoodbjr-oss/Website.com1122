@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d18">
+<meta name="description" content="NMDCAT Master — compact tests, result history and protected study PDFs.">
+<title>NMDCAT Master</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<header class="topbar">
+  <button class="brand" onclick="showView('home')" aria-label="Home">
+    <span class="logo">N</span><span><b>NMDCAT Master</b><small>Tests · Results · PDFs</small></span>
+  </button>
+  <div class="header-actions">
+    <span id="planBadge" class="badge neutral">Free</span>
+    <button id="loginBtn" class="btn primary" onclick="login()">Google sign in</button>
+    <button id="logoutBtn" class="btn ghost hidden" onclick="logout()">Logout</button>
+  </div>
+</header>
+<nav class="nav">
+  <button class="nav-btn active" data-view="home" onclick="showView('home')">Home</button>
+  <button class="nav-btn" data-view="tests" onclick="showView('tests')">Tests</button>
+  <button class="nav-btn" data-view="results" onclick="showView('results')">History</button>
+  <button class="nav-btn" data-view="pdfs" onclick="showView('pdfs')">PDFs</button>
+  <button class="nav-btn" data-view="plans" onclick="showView('plans')">Plans</button>
+  <button id="adminNav" class="nav-btn hidden" data-view="admin" onclick="showView('admin')">Admin</button>
+</nav>
+
+<main class="container">
+<section id="home" class="view">
+  <div class="hero">
+    <div class="hero-main">
+      <div class="eyebrow">2026 preparation workspace</div>
+      <h1>Learn fast. Test often. Track everything.</h1>
+      <p class="muted">Compact NMDCAT practice with timed MCQs, score history and plan-controlled study PDFs.</p>
+      <div class="hero-actions">
+        <button class="btn primary" onclick="showView('tests')">Start a test</button>
+        <button class="btn secondary" onclick="showView('plans')">View plans</button>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="stat-big">Small font by default</div>
+      <div class="muted">More MCQs fit on a mobile screen without zooming.</div>
+    </div>
+  </div>
+
+  <div class="grid three">
+    <article class="card"><div class="icon">🧪</div><h3>Timed MCQs</h3><p>Countdown, question navigator, autosave and instant scoring.</p></article>
+    <article class="card"><div class="icon">📊</div><h3>Result history</h3><p>Attempts are stored in Google Sheets for your personal history.</p></article>
+    <article class="card"><div class="icon">📚</div><h3>Protected PDFs</h3><p>Private Drive files are delivered only after server-side plan checks.</p></article>
+  </div>
+
+  <article class="card">
+    <div class="section-head"><div><h2>Your account</h2><p class="muted">Sign in to sync tests, results and PDF access.</p></div><span id="authStatus" class="badge neutral">Not signed in</span></div>
+    <div class="user-panel"><div class="avatar" id="avatar">?</div><div><b id="userName">Guest</b><div id="userEmail" class="muted">No account connected</div></div></div>
+    <div id="paymentNotice" class="notice hidden"></div>
+  </article>
+</section>
+
+<section id="tests" class="view hidden">
+  <div class="section-head"><div><div class="eyebrow">Practice</div><h2>Available tests</h2><p class="muted">Free, Plus and Pro tests can be managed from Google Sheets.</p></div><button class="btn ghost" onclick="loadTests()">Refresh</button></div>
+  <div id="testGrid" class="grid three"></div>
+</section>
+
+<section id="testRunner" class="view hidden">
+  <div class="runner-head"><div><div class="eyebrow" id="runnerSubject">Test</div><h2 id="runnerTitle">Loading…</h2></div><div id="timer" class="timer">00:00</div></div>
+  <div id="questionNav" class="question-nav"></div>
+  <div class="runner-layout">
+    <article class="card question-card">
+      <div class="question-meta"><span id="qNumber"></span><span id="qProgress"></span></div>
+      <div id="questionText" class="question-text"></div>
+      <div id="options" class="options"></div>
+      <div class="runner-actions">
+        <button class="btn ghost" onclick="previousQuestion()">← Prev</button>
+        <button class="btn secondary" onclick="nextQuestion()">Next →</button>
+        <button class="btn danger" onclick="submitTest()">Submit</button>
+      </div>
+    </article>
+    <aside class="card compact-card">
+      <h3>Progress</h3>
+      <div class="mini-stat"><span>Answered</span><b id="answeredCount">0</b></div>
+      <div class="mini-stat"><span>Total</span><b id="totalCount">0</b></div>
+      <p class="muted">Your current answers stay in this browser until submission.</p>
+    </aside>
+  </div>
+</section>
+
+<section id="results" class="view hidden">
+  <div class="section-head"><div><div class="eyebrow">Performance</div><h2>Result history</h2><p class="muted">Your latest submitted attempts.</p></div><button class="btn ghost" onclick="loadResults()">Refresh</button></div>
+  <div id="resultsTable" class="card table-card"></div>
+</section>
+
+<section id="pdfs" class="view hidden">
+  <div class="section-head"><div><div class="eyebrow">Study library</div><h2>Protected PDFs</h2><p class="muted">Every open request is checked against your active plan.</p></div><button class="btn ghost" onclick="loadPdfs()">Refresh</button></div>
+  <div id="pdfGrid" class="grid three"></div>
+</section>
+
+<section id="plans" class="view hidden">
+  <div class="section-head"><div><div class="eyebrow">Membership</div><h2>Free · Plus · Pro</h2><p class="muted">Prices are managed through Stripe Price IDs in Vercel.</p></div></div>
+  <div class="grid three">
+    <article class="card plan-card"><span class="badge neutral">FREE</span><h2>Free</h2><div class="price">0</div><ul><li>Free tests</li><li>Result history</li><li>Free PDFs</li></ul><button class="btn secondary full" disabled>Base plan</button></article>
+    <article class="card plan-card featured"><span class="badge plus">PLUS</span><h2>Plus</h2><div class="price">Stripe price</div><ul><li>Free + Plus tests</li><li>Plus PDFs</li><li>Detailed history</li></ul><button class="btn primary full" onclick="checkout('plus')">Upgrade to Plus</button></article>
+    <article class="card plan-card"><span class="badge pro">PRO</span><h2>Pro</h2><div class="price">Stripe price</div><ul><li>Everything in Plus</li><li>Pro tests and PDFs</li><li>Priority study library</li></ul><button class="btn primary full" onclick="checkout('pro')">Upgrade to Pro</button></article>
+  </div>
+  <div class="notice">Payment access is activated by the signed Stripe webhook—not by trusting a browser redirect.</div>
+</section>
+
+<section id="admin" class="view hidden">
+  <div class="section-head"><div><div class="eyebrow">Management</div><h2>Admin</h2><p class="muted">Create/update test and PDF metadata in Google Sheets.</p></div><button class="btn ghost" onclick="loadAdmin()">Refresh</button></div>
+  <div class="grid two">
+    <article class="card"><h3>Test</h3><form onsubmit="saveTest(event)">
+      <input id="testId" required placeholder="testId">
+      <input id="testTitle" required placeholder="Title">
+      <input id="testSubject" placeholder="Subject">
+      <input id="testMinutes" type="number" min="1" value="45" placeholder="Time minutes">
+      <select id="testPlan"><option value="free">Free</option><option value="plus">Plus</option><option value="pro">Pro</option></select>
+      <textarea id="testQuestions" required rows="9" placeholder='[{"q":"Question","options":["A","B","C","D"],"answer":0,"explanation":"Reason"}]'></textarea>
+      <button class="btn primary full">Save test</button>
+    </form></article>
+    <article class="card"><h3>PDF</h3><form onsubmit="savePdf(event)">
+      <input id="pdfId" required placeholder="pdfId">
+      <input id="pdfTitle" required placeholder="Title">
+      <input id="pdfFileId" required placeholder="Google Drive file ID">
+      <select id="pdfPlan"><option value="free">Free</option><option value="plus">Plus</option><option value="pro">Pro</option></select>
+      <textarea id="pdfDescription" rows="6" placeholder="Description"></textarea>
+      <button class="btn primary full">Save PDF</button>
+    </form></article>
+  </div>
+  <div id="adminTables" class="grid two admin-tables"></div>
+</section>
+</main>
+<footer>NMDCAT Master · Compact study dashboard</footer>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithRedirect,getRedirectResult,signOut,onAuthStateChanged}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+window.__firebase={initializeApp,getAuth,GoogleAuthProvider,signInWithRedirect,getRedirectResult,signOut,onAuthStateChanged};
+window.dispatchEvent(new Event("firebase-sdk-ready"));
+</script>
+<script src="/app.js" defer></script>
+</body>
+</html>
